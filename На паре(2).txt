@@ -1,0 +1,41 @@
+#include <iostream>
+#include <ctime>
+#include <Windows.h>
+
+const int threads = 3;
+int *uk;
+DWORD WINAPI func(LPVOID arg)
+{
+	srand(time(NULL));
+	int n = rand() % 1000;
+	uk = new int[n];
+	for (int i = 0; i < n; i++)
+	{
+		uk[i] = 0;
+		Sleep(10);
+	}
+	delete[] uk;
+	return 0;
+}
+
+int main()
+{
+	using namespace std;
+	setlocale(LC_ALL, "rus");
+
+	HANDLE hand[threads];
+	DWORD IDThread[threads];
+
+	for (int i = 0; i < threads; i++)
+	{
+		hand[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, NULL, 0, &IDThread[i]);
+	}
+
+	if (WaitForMultipleObjects(threads, hand, TRUE, INFINITE) == WAIT_OBJECT_0)
+	{
+		cout << "All thread is closes" << endl;
+	}
+
+	system("pause");
+	return 0;
+}

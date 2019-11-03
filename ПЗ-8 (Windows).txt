@@ -1,0 +1,83 @@
+#include <iostream>
+#include "Windows.h"
+#include "string"
+using namespace std;
+
+class CSomeClass {
+private:
+	static HANDLE s_hHeap;
+	static UINT s_uNumAllocsInHeap;
+	// здесь располагаются закрытые данные и функции-члены
+public:
+	int s_Numeric;
+	string s_char;
+	void* operator new (size_t size);
+	void operator delete (void* p);
+	void create_numeric(int d)
+	{
+		s_Numeric = d;
+	}
+	void create_char(string s)
+	{
+		s_char = s;
+	}
+	// здесь располагаются открытые данные и функции-члены
+};
+
+HANDLE CSomeClass::s_hHeap = NULL;
+UINT CSomeClass::s_uNumAllocsInHeap = 0;
+void* CSomeClass::operator new (size_t size)
+{
+	if (s_hHeap == NULL) {
+		// куча не существует; создаем ее
+		s_hHeap = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
+		if (s_hHeap == NULL)
+			return(NULL);
+	}
+	// куча для объектов CSomeClass существует 
+	void* p = HeapAlloc(s_hHeap, 0, size);
+	if (p != NULL)
+	{
+		// увеличиваем счетчик объектов CSomeClass в куче
+		s_uNumAllocsInHeap++;
+	}
+	// возвращаем адрес созданного объекта CSomeClass 
+	return(p);
+}
+
+void CSomeClass::operator delete (void* p)
+{
+	if (HeapFree(s_hHeap, 0, p))
+	{ // объект удален успешно 
+		s_uNumAllocsInHeap--;
+	}
+	if (s_uNumAllocsInHeap == 0) {
+		// если в куче больше нет объектов,  уничтожаем ее
+		if (HeapDestroy(s_hHeap)) {
+			// описатель кучи приравниваем NULL,  чтобы оператор new
+			// мог создать новую кучу при создании нового объекта CSomeClass
+			s_hHeap = NULL;
+		}
+	}
+}
+
+/*ostream& operator<<(ostream& os, const CSomeClass& k)
+{
+	os << k.s_Numeric << " " << k.s_char;
+	return os;
+}*/
+
+int main()
+{
+	setlocale(LC_ALL, "rus");
+
+	CSomeClass* kucha = new CSomeClass;
+	kucha->create_numeric(15);
+	kucha->create_char("qwerty");
+
+	cout << kucha->s_Numeric << " " << kucha->s_char << endl;
+
+	delete kucha;
+
+	return 0;
+}

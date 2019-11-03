@@ -1,0 +1,47 @@
+#include <iostream>
+#include "Windows.h"
+using namespace std;
+
+char MappingName[] = "MappingName";
+
+int main()
+{
+	setlocale(LC_ALL, "rus");
+
+	HANDLE hMapping;
+	HANDLE hMutex = CreateMutex(NULL, FALSE, "Mutex");
+	char *str;
+
+	cout << "¬ведите строку дл€ вывода ее на обе консоли: " << endl;
+	hMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 256 * sizeof(char), MappingName);
+	if (!hMapping)
+	{
+		cerr << "Create file mapping failed."<< endl;
+		return GetLastError();
+	}
+	str = (char*)MapViewOfFile(hMapping, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0); 
+
+	while (true)
+	{
+		WaitForSingleObject(hMutex, INFINITE);
+		cin >> str;
+		ReleaseMutex(hMutex);
+	}
+	
+	if (!UnmapViewOfFile(str))
+	{
+		cerr << "Unmap view of file failed." << endl;
+		return GetLastError();
+	}
+	// закрываем объект отображени€ файла в пам€ть
+	if (!CloseHandle(hMapping))
+	{
+		cerr << "Close file failed." << endl;
+		return GetLastError();
+	}
+	// ждем команду на завершение процесса	
+	
+
+	return 0;
+}
+

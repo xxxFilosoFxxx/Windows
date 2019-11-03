@@ -1,0 +1,37 @@
+#include <iostream>
+#include "Windows.h"
+using namespace std;
+
+int main(int argc, char* argv[])
+{
+	setlocale(LC_ALL, "rus");
+	//TCHAR AppName[] = TEXT("D:\\Users\\S17309\\source\\repos\\ог-10 (Windows)\\Debug\\ог-10 (Windows).exe");
+
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si, sizeof(STARTUPINFO));
+	si.cb = sizeof(STARTUPINFO);
+	int num = atoi(argv[1]);
+	cout << num << endl;
+	num--;
+
+	char str[100] = { 0 };
+	sprintf_s(str, "%i", num);
+	std::string args = std::string(argv[0]) + " " + std::string(str);
+
+	if (num >= 0)
+	{
+		if (!CreateProcess(argv[0], (LPSTR)args.c_str(), NULL, NULL, TRUE,
+			CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi))
+		{
+			cout << "The new process is not created." << endl
+				<< "Check a name of the process." << endl
+				<< "Press any key to finish." << endl;
+			cin.get();
+			return -1;
+		}
+	}
+	cin.get();
+	//CloseHandle(pi.hProcess);
+	return 0;
+}

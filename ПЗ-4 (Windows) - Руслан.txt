@@ -1,0 +1,71 @@
+// ConsoleApplication2.cpp : Defines the entry point for the console application.
+//
+
+#include "stdafx.h"
+#include <iostream>
+#include "Windows.h"
+
+using namespace std;
+
+int main()
+{
+	setlocale(LC_ALL, "rus");
+	HANDLE hFile;
+	DWORD size;
+	DWORD NumberofBytes1;
+	DWORD NumberofBytes2;
+	DWORD File;
+	char NameFile[100];
+	char NameFileToCopy[100];
+	cout << "¬ведите название исходного файла: ";
+	cin >> NameFile;
+	cout << "¬ведите название целевого файла: ";
+	cin >> NameFileToCopy;
+
+	// —оздаем файл, с которого будем считывтаь данные и проецируем его в пам€ть
+	hFile = CreateFile(NameFile, GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		return GetLastError();
+	}
+
+
+	size = GetFileSize(hFile, NULL);
+	DWORD size_file = size;
+
+	int bytes = 64 * 1024;
+	char* memory;
+	memory = (char*)VirtualAlloc(NULL, bytes , MEM_COMMIT, PAGE_READWRITE);
+	
+	for (int i = 0;; i++)
+	{
+		if (!ReadFile(hFile, (char*)(memory +  i * 1024), 1024, &NumberofBytes1, (LPOVERLAPPED)NULL))
+		{
+			return GetLastError();
+		}
+		size = size - bytes;
+		if (bytes >= size)
+		bytes = size;
+		if (NumberofBytes1 == 0)
+			break;
+
+	}
+
+	HANDLE hFileToCopy = CreateFile(NameFileToCopy, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFileToCopy == INVALID_HANDLE_VALUE)
+	{
+		return GetLastError();
+	}
+
+	if (!WriteFile(hFileToCopy, (char*)memory, size_file, &NumberofBytes2, (LPOVERLAPPED)NULL)) {
+		CloseHandle(hFileToCopy);
+		return GetLastError();
+	}
+
+
+
+
+	cout << "‘айл успешно скопирован!" << endl;
+	return 0;
+}
+

@@ -1,0 +1,63 @@
+#include <windows.h> 
+#include <tlhelp32.h>
+#include <iostream>
+#include <string>
+using namespace std;
+
+FILE* file;
+bool Process() {
+
+	HANDLE hProcessSnap;
+	PROCESSENTRY32 pe32;
+
+	//Это мы находим дескриптор снимка процессов
+	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (hProcessSnap == INVALID_HANDLE_VALUE)
+		return false;
+	pe32.dwSize = sizeof(PROCESSENTRY32);
+
+
+	Process32First(hProcessSnap, &pe32);
+	fprintf(file, "PID= %x  %s   PID родителя %d\n\r", pe32.th32ProcessID, pe32.szExeFile, pe32.th32ParentProcessID);
+	fprintf(file, "\n");
+	while (Process32Next(hProcessSnap, &pe32)) {
+		fprintf(file, "PID= %x  %s   PID родителя %d\n\r", pe32.th32ProcessID, pe32.szExeFile, pe32.th32ParentProcessID);
+		fprintf(file, "\n");
+	}
+
+	CloseHandle(hProcessSnap);
+	return true;
+}
+
+
+
+int main() {
+	setlocale(LC_ALL, "rus");
+	file = fopen("rezultat.txt", "wb");
+	Process();
+	fclose(file);
+	while (true) {
+		HANDLE hProcessSnap;
+		PROCESSENTRY32 pe32;
+
+		//Это мы находим дескриптор снимка процессов
+		hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (hProcessSnap == INVALID_HANDLE_VALUE)
+			return false;
+		pe32.dwSize = sizeof(PROCESSENTRY32);
+
+
+		int i = 0, num = 0;
+		scanf("%x", &num);
+		Process32First(hProcessSnap, &pe32);
+		if (num == pe32.th32ProcessID)
+			printf("PID= %x  %s   PID родителя %d\n", pe32.th32ProcessID, pe32.szExeFile, pe32.th32ParentProcessID);
+		while (Process32Next(hProcessSnap, &pe32)) {
+			if (num == pe32.th32ProcessID)
+				printf("PID= %x  %s   PID родителя %d\n", pe32.th32ProcessID, pe32.szExeFile, pe32.th32ParentProcessID);
+		}
+
+	}
+	system("pause");
+	return 0;
+}

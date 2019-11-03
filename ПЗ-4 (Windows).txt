@@ -1,0 +1,65 @@
+// ПЗ-4 (Windows).cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
+//
+
+#include "pch.h"
+#include <iostream>
+#include "Windows.h"
+
+using namespace std;
+
+int main()
+{
+	setlocale(LC_ALL, "rus");
+    
+	DWORD size;
+	DWORD buf;
+	DWORD dwFile;
+	/*TCHAR hNameFile[40];
+	TCHAR hNameFileToCopy[40];
+	cout << "Введите название исходного файла: " << endl;
+	wcin >> hNameFile;
+	cout << "Введите название целевого файла: " << endl;
+	wcin >> hNameFileToCopy;*/
+	
+	// Создаем файл, с которого будем считывтаь данные и проецируем его в память
+	HANDLE hFile = CreateFile(/*hNameFile*/ TEXT("C:\\Фильмы\\text.txt"), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		printf("Error open file\n");
+		return -1;
+	}
+
+	HANDLE hFileToCopy = CreateFile(/*hNameFileToCopy*/ TEXT("C:\\Фильмы\\text1.txt"), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFileToCopy == INVALID_HANDLE_VALUE)
+	{
+		printf("Error open file\n");
+		return -1;
+	}
+
+	size = GetFileSize(hFile, &size);
+	if (size == INVALID_FILE_SIZE) {
+		cerr << "fileMappingCreate - GetFileSize failed "<< endl;
+		CloseHandle(hFile);
+		return -1;
+	}
+
+	char* _line;
+	_line = (char*)VirtualAlloc(hFile, size, MEM_RESERVE | MEM_COMMIT, PAGE_READONLY);
+
+	for (int i = 0;; i++)
+	{
+		ReadFile(hFile, (char*)(_line + 64*1024*i), 64*1024, &buf, NULL);
+		if (buf == NULL)
+			break;
+	}
+
+	WriteFile(hFileToCopy, _line, size, &dwFile, NULL);
+	
+	VirtualFree(hFile, size, MEM_RELEASE);
+	CloseHandle(hFile);
+	CloseHandle(hFileToCopy);
+
+	cout << "Файл успешно скопирован!" << endl;
+	return 0;
+}
+

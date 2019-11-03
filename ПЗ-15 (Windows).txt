@@ -1,0 +1,120 @@
+#include <Windows.h>
+#include <iostream>
+#include <conio.h>
+#include <Tlhelp32.h>
+
+using namespace std;
+
+int main()
+{
+	int a = 1;
+
+	int choise;
+	do {
+		cout << "***---***"  << a++ << "***---***" << endl;;
+		cout
+			<< "1.Up prioritu process" << endl
+			<< "2.Down prioritu process" << endl
+			<< "3.Up prioritu thread" << endl
+			<< "4.Down prioritu thread" << endl
+			<< "0.Exit" << endl;
+		cin >> choise;
+		switch (choise) {
+		case 1: {
+			HANDLE  hProcess;
+			DWORD  dwPriority;
+
+			// получаем псевдодескриптор текущего потока
+			hProcess = GetCurrentProcess();
+
+			// узнаем приоритет текущего процесса
+			dwPriority = GetPriorityClass(hProcess);
+			printf("The priority of the process = %d.\n", dwPriority);
+			// устанавливаем высокий приоритет текущего процесса
+			if (!SetPriorityClass(hProcess, HIGH_PRIORITY_CLASS))
+			{
+				_cputs("Set priority class failed.\n");
+				_cputs("Press any key to exit.\n");
+				_getch();
+				return GetLastError();
+			}
+			dwPriority = GetPriorityClass(hProcess);
+			printf("The priority of the process = %d.\n", dwPriority);
+
+		}break;
+
+		case 2: {
+			HANDLE  hProcess;
+			DWORD  dwPriority;
+
+			// получаем псевдодескриптор текущего потока
+			hProcess = GetCurrentProcess();
+
+			// узнаем приоритет текущего процесса
+			dwPriority = GetPriorityClass(hProcess);
+			printf("The priority of the process = %d.\n", dwPriority);
+
+			// устанавливаем фоновый приоритет текущего процесса
+			if (!SetPriorityClass(hProcess, IDLE_PRIORITY_CLASS))
+			{
+				_cputs("Set priority class failed.\n");
+				_cputs("Press any key to exit.\n");
+				_getch();
+				return GetLastError();
+			}
+			dwPriority = GetPriorityClass(hProcess);
+			_cprintf("The priority of the process = %d.\n", dwPriority);
+		}break;
+		case 3: {
+			HANDLE  hThread;
+			DWORD  dwPriority;
+
+			// получаем псевдодескриптор текущего потока
+			hThread = GetCurrentThread();
+			// узнаем уровень приоритет текущего потока
+			dwPriority = GetThreadPriority(hThread);
+			printf("The priority level of the thread = %d.\n", dwPriority);
+
+			// повышаем приоритет текущего потока
+			if (!SetThreadPriority(hThread, THREAD_PRIORITY_HIGHEST))
+			{
+				_cputs("Set thread priority failed.\n");
+				_cputs("Press any key to exit.\n");
+				_getch();
+				return GetLastError();
+			}
+			// узнаем уровень приоритета текущего потока
+			dwPriority = GetThreadPriority(hThread);
+			printf("The priority level of the thread = %d.\n", dwPriority);
+
+
+		}break;
+		case 4: {
+			HANDLE  hThread;
+			DWORD  dwPriority;
+
+			// получаем псевдодескриптор текущего потока
+			hThread = GetCurrentThread();
+			// узнаем уровень приоритет текущего потока
+			dwPriority = GetThreadPriority(hThread);
+			printf("The priority level of the thread = %d.\n", dwPriority);
+
+			// повышаем приоритет текущего потока
+			if (!SetThreadPriority(hThread, THREAD_PRIORITY_LOWEST))
+			{
+				_cputs("Set thread priority failed.\n");
+				_cputs("Press any key to exit.\n");
+				_getch();
+				return GetLastError();
+			}
+			// узнаем уровень приоритета текущего потока
+			dwPriority = GetThreadPriority(hThread);
+			printf("The priority level of the thread = %d.\n", dwPriority);
+
+		}break;
+		default:
+			cout << "Try again" << endl;
+		}
+	} while (choise != 0);
+	return 0;
+}

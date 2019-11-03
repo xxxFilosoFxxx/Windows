@@ -1,0 +1,98 @@
+#include <iostream>
+#include "Windows.h"
+#include <pdh.h>
+#include <conio.h>
+using namespace std;
+#pragma comment(lib , "pdh.lib")
+
+PDH_STATUS pdh_Init(HQUERY &hQuery, HCOUNTER &hCounter)
+{
+	PDH_STATUS  pdhResult = 0;
+	TCHAR       szCounterPath[1024];
+	DWORD       dwPathSize = 1024;
+	PDH_COUNTER_PATH_ELEMENTS pe;
+	DWORD       dwType = 0;
+
+	pdhResult = PdhOpenQuery(NULL, 0, &hQuery); // запрос на открытие PDH 
+
+	if (pdhResult != ERROR_SUCCESS) // если была ошибка, то
+		return pdhResult; // выходим, возвращая номер ошибки
+
+	pe.szMachineName = 0l;
+	pe.szObjectName = (LPSTR)"Processor";
+	pe.szInstanceName = (LPSTR)"_Total";
+	pe.szParentInstance = NULL;
+	pe.dwInstanceIndex = 0;
+	pe.szCounterName = (LPSTR)"% Processor Time";
+
+	// создаем путь к счетчику PDH
+	pdhResult = PdhMakeCounterPath(&pe, szCounterPath, &dwPathSize, 0);
+	if (pdhResult != ERROR_SUCCESS) 
+		return pdhResult;
+    // szCounterPath = "\\\Processor(_Total)\\% Processor Time"
+	pdhResult = PdhAddEnglishCounter(hQuery, szCounterPath/* "\\Processor(_Total)\\% Processor Time"*/, NULL, &hCounter);
+	if (pdhResult != ERROR_SUCCESS) 
+		return pdhResult; 
+
+	return pdhResult;
+}
+
+int GetCPUUsage(HQUERY hQuery, HCOUNTER hCounter, PDH_STATUS &pdhStatus)
+{
+	DWORD       dwType = 0;
+	pdhStatus = PdhCollectQueryData(hQuery);
+
+	_PDH_FMT_COUNTERVALUE pfci;
+	ZeroMemory(&pfci, sizeof(pfci)); // очищаем структуру pfci
+
+// Получаем инфу о загруженности проца!
+	pdhStatus = PdhGetFormattedCounterValue(hCounter, PDH_FMT_DOUBLE, &dwType, &pfci);
+
+	return (int)pfci.doubleValue; // возвращаем загруженность проца!
+}
+
+void pdh_Uninit(HQUERY hQuery, HCOUNTER hCounter)
+{
+	PdhRemoveCounter(hCounter); // удаляем счетчик
+	PdhCloseQuery(hQuery); // закрываем запрос
+}
+
+void begin()
+{
+	PDH_STATUS  pdhStatus = 0;
+	HQUERY hQuery;
+	HQUERY hCounter;
+	int iUsage = 0;
+
+	pdhStatus = pdh_Init(hQuery, hCounter); // инициализируем PDH
+
+ // если не произошел облом с иницализации PDH, то
+	if (pdhStatus == ERROR_SUCCESS)
+	{
+		
+		//bool flag = true;
+		while (GetKeyState(VK_ESCAPE) >= 0) // При нажатии Esc выходит из программы
+		{
+			// получаем загруженность проца
+			iUsage = GetCPUUsage(hQuery, hCounter, pdhStatus);
+			printf("%3i%% -> процент загрузки процессора в режиме ядра\n", iUsage); // выводим значение
+
+			Sleep(500); 
+		} 
+		pdh_Uninit(hQuery, hCounter); // заканчиваем работу с PDH
+	}
+	else
+	{
+		cout << "Error: not found PDH" << endl;
+	}
+}
+
+int main()
+{
+	setlocale(LC_ALL, "rus");
+
+	begin();
+
+	cout << "Нажмите любую клавишу для выхода\n" << endl;
+	return 0;
+}

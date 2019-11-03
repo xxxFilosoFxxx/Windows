@@ -1,0 +1,65 @@
+#include <iostream>
+#include <ctime>
+#include <Windows.h>
+
+const int threads = 3;
+int *uk;
+int i = 0;
+CRITICAL_SECTION s;
+
+struct leave_section
+{
+	leave_section(CRITICAL_SECTION &section)
+	{
+		EnterCriticalSection(&section);
+	}
+
+	~leave_section()
+	{
+		LeaveCriticalSection(&s);
+	}
+};
+
+DWORD WINAPI func(LPVOID arg)
+{
+ /* srand(time(NULL));
+	int n = rand() % 1000;
+	uk = new int[n];
+	for (int i = 0; i < n; i++)
+	{
+		uk[i] = 0;
+		Sleep(10);
+	}
+	delete[] uk;*/
+	leave_section sec(s);
+	i++;
+	WaitForSingleObject(arg, INFINITE);
+	std::cout << i << std::endl;
+	return 0;
+}
+
+int main()
+{
+	using namespace std;
+	setlocale(LC_ALL, "rus");
+	InitializeCriticalSection(&s);
+	DWORD IDThread[threads];
+	HANDLE hand[threads];
+	HANDLE hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	
+	for (int i = 0; i < threads; i++)
+	{
+		hand[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, hEvent, 0, &IDThread[i]);
+	}
+	Sleep(3000);
+	SetEvent(hEvent);
+	
+	if (WaitForMultipleObjects(threads, hand, TRUE, INFINITE) == WAIT_OBJECT_0)
+	{
+		cout << "All thread is closes" << endl;
+	}
+
+	system("pause");
+	return 0;
+}

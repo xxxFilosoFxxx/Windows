@@ -1,0 +1,48 @@
+#include <Windows.h>
+#include <iostream>
+#include <Tlhelp32.h>
+
+using namespace std;
+
+int main()
+{
+	setlocale(LC_ALL, "rus");
+
+	int choise;
+	do {
+		cout
+			<< "1.Terminate" << endl
+			<< "0.Exit" << endl;
+		cin >> choise;
+		switch (choise) {
+		case 1: {
+			PROCESSENTRY32 pEntry;
+			HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);  //снапшот всех процессов из диспетчера задач
+			pEntry.dwSize = sizeof(pEntry); //хз зачем это, так было в описании
+			DWORD ProcessID;
+			cin >> ProcessID;
+			BOOL hRes = Process32First(hSnapShot, &pEntry); //записываем информацию о первом процессе
+			bool flag = false;
+			while (hRes) {
+				if (ProcessID == pEntry.th32ProcessID) {
+					HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, 0, (DWORD)pEntry.th32ProcessID);
+					if (hProcess != NULL)
+					{
+						TerminateProcess(hProcess, 9);
+						CloseHandle(hProcess);
+						flag = true;
+					}
+				}
+				hRes = Process32Next(hSnapShot, &pEntry); //перемещаемся по списку процессов
+			}
+			if (!flag) {
+				cout << "This process ID does not exists." << endl;
+			}
+			CloseHandle(hSnapShot);
+		}break;
+		default:
+			cout << "Not found, please, try again!" << endl;
+		}
+	} while (choise != 0);
+	return 0;
+}
